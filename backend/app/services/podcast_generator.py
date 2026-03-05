@@ -8,14 +8,18 @@ from datetime import datetime
 import uuid
 
 from app.services.tts_service import tts_service
+from app.services.cantonese_tts_service import cantonese_tts
 from app.services.audio_processor import AudioProcessor
 from app.db.models import Podcast, PodcastSegment
+from app.core.config import settings
 
 class PodcastGenerator:
     """AI-powered podcast generation service"""
     
     def __init__(self):
         self.audio_processor = AudioProcessor()
+        # Use Cantonese AI TTS as primary service (higher quality for Cantonese)
+        self.tts_service = cantonese_tts if settings.CANTONESE_AI_API_KEY else tts_service
     
     async def generate_daily_podcast(
         self,
@@ -170,12 +174,24 @@ class PodcastGenerator:
         text = segment_data["text"]
         emotion = segment_data.get("emotion", "neutral")
         
-        # Generate TTS audio
+        # Map emotion to speed/pitch for Cantonese AI
+        emotion_params = {
+            "cheerful": {"speed": 1.1, "pitch": 5},
+            "professional": {"speed": 1.0, "pitch": 0},
+            "excited": {"speed": 1.3, "pitch": 10},
+            "friendly": {"speed": 1.0, "pitch": 5},
+            "neutral": {"speed": 1.0, "pitch": 0}
+        }
+        
+        params = emotion_params.get(emotion, {"speed": 1.0, "pitch": 0})
+        
+        # Generate TTS audio using Cantonese AI service
         filename = f"podcast_{podcast_id}_{index:03d}_{host}.wav"
-        audio_path = await tts_service.synthesize_with_emotion(
+        audio_path = await self.tts_service.synthesize_speech(
             text=text,
-            emotion=emotion,
-            output_filename=filename
+            output_filename=filename,
+            speed=params["speed"],
+            pitch=params["pitch"]
         )
         
         # Get actual duration

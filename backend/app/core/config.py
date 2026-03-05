@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     AZURE_SPEECH_REGION: str = "southeastasia"
     AZURE_SPEECH_VOICE: str = "zh-HK-HiuMaanNeural"
     
+    # Cantonese AI TTS (Alternative/Primary)
+    CANTONESE_AI_API_URL: str = "https://cantonese.ai/api/tts"
+    CANTONESE_AI_API_KEY: str = ""
+    CANTONESE_AI_VOICE_ID: str = "2725cf0f-efe2-4132-9e06-62ad84b2973d"
+    
     # OpenAI
     OPENAI_API_KEY: str = ""
     
