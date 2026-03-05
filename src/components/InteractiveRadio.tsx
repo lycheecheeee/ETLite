@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { 
   Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, 
-  Mic2, Phone, MessageCircle, Heart, Share2, Download,
+  Mic2, Phone, MessageCircle, Heart, Share2,
   Radio, Disc, Music, Send, Sparkles
 } from 'lucide-react'
 
@@ -104,7 +104,7 @@ interface InteractiveRadioProps {
   userProfile?: any
 }
 
-export function InteractiveRadio({ userProfile }: InteractiveRadioProps) {
+export function InteractiveRadio({}: InteractiveRadioProps) {
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -125,7 +125,6 @@ export function InteractiveRadio({ userProfile }: InteractiveRadioProps) {
   const [activeTab, setActiveTab] = useState<'live' | 'chat' | 'questions'>('live')
   
   const audioRef = useRef<HTMLAudioElement>(null)
-  const progressInterval = useRef<number>()
 
   const currentSegment = radioSegments[currentSegmentIndex]
 

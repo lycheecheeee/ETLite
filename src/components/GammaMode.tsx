@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { Grid3X3, LayoutGrid, Move, Maximize2, Minimize2, Save, RotateCcw, Zap } from 'lucide-react'
+import { Grid3X3, LayoutGrid, Move, Maximize2, Minimize2, RotateCcw, Zap } from 'lucide-react'
 import { ContentAtoms } from './ContentAtoms'
 
 interface GammaModeProps {
@@ -9,7 +9,7 @@ interface GammaModeProps {
 
 type ViewMode = 'grid' | 'list' | 'orbit' | 'custom'
 
-export function GammaMode({ userProfile }: GammaModeProps) {
+export function GammaMode({}: GammaModeProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('orbit')
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showSettings, setShowSettings] = useState(false)

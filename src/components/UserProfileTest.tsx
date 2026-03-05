@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { Brain, TrendingUp, Clock, CheckCircle2, ArrowRight } from 'lucide-react'
+import { Brain, TrendingUp, Clock, CheckCircle2 } from 'lucide-react'
 
 interface Question {
   id: string
@@ -80,7 +80,7 @@ const questions: Question[] = [
 ]
 
 interface UserProfileTestProps {
-  onComplete: (profile: Userprofile) => void
+  onComplete: (profile: UserProfile) => void
 }
 
 export interface UserProfile {
@@ -130,9 +130,9 @@ export function UserProfileTest({ onComplete }: UserProfileTestProps) {
     }
 
     return {
-      foundation: getLevel(fValues, 'foundation'),
-      mindset: getLevel(mValues, 'mindset'),
-      timeframe: getLevel(tValues, 'timeframe'),
+      foundation: getLevel(fValues, 'foundation') as 'beginner' | 'intermediate' | 'advanced',
+      mindset: getLevel(mValues, 'mindset') as 'conservative' | 'balanced' | 'aggressive',
+      timeframe: getLevel(tValues, 'timeframe') as 'long' | 'medium' | 'short',
     }
   }
 

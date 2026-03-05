@@ -46,7 +46,7 @@ interface PodcastPlayerProps {
   userProfile?: any
 }
 
-export function PodcastPlayer({ userProfile }: PodcastPlayerProps) {
+export function PodcastPlayer({}: PodcastPlayerProps) {
   const [currentEpisode, setCurrentEpisode] = useState<PodcastEpisode>(mockEpisodes[0])
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)

@@ -93,7 +93,7 @@ interface ContentAtomsProps {
 
 export function ContentAtoms({ mode = 'ai' }: ContentAtomsProps) {
   const [selectedAtom, setSelectedAtom] = useState<string | null>(null)
-  const [atoms, setAtoms] = useState(mockAtoms)
+  const atoms = mockAtoms
 
   const getAtomIcon = (type: string) => {
     switch (type) {
