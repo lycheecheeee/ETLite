@@ -1,0 +1,10 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant"><!-- 同之前 HTML，改 playlist --> 
+<script>
+const JINGLES = ['jingles/prog_1_mina_jingle.wav', 'jingles/prog_2_zicheng_jingle.wav', 'jingles/prog_3_haifeng_jingle.wav', 'jingles/prog_4_zicheng_jingle.wav', 'jingles/prog_5_zicheng_jingle.wav', 'jingles/prog_6_ray_jingle.wav', 'jingles/prog_7_vee_jingle.wav', 'jingles/prog_8_mina_jingle.wav', 'jingles/prog_9_lianwu_jingle.wav'];
+const HOSTS = ["zicheng_sample.wav", "mina_sample.wav"]; 
+// 播 jingle → host → jingle → ...
+let playlist = [...JINGLES, ...HOSTS];
+</script>
+</html>

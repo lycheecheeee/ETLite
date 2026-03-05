@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>etnet Radio Final - 全檔案匹配</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+* { font-family: 'Noto Sans TC', sans-serif; }
+body { background: linear-gradient(135deg, #0f0f23 0%, #1a1a3a 50%, #0f0f23 100%); }
+.glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.12); }
+.live-dot { animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.1); } }
+.host-glow { box-shadow: 0 0 30px var(--glow-color); }
+#visualizer { background: rgba(0,0,0,0.4); border-radius: 12px; }
+</style>
+</head>
+<body class="min-h-screen p-8 text-white">
+
+<div class="max-w-md mx-auto mt-16 glass rounded-3xl p-8">
+  <div class="text-center mb-8">
+    <div class="live-dot w-3 h-3 bg-red-400 mx-auto mb-4 rounded-full"></div>
+    <div id="avatar" class="w-28 h-28 mx-auto rounded-2xl flex items-center justify-center text-4xl font-black mb-6 host-glow mx-auto" style="--glow-color: rgba(124,58,237,0.6); background: linear-gradient(135deg, #7c3aed, #6d28d9);">
+      🧠
+    </div>
+    <div>
+      <p id="prog-title" class="text-2xl font-black mb-2 tracking-tight">實戰交易廳 Trading Floor</p>
+      <p id="host-name" class="text-xl font-bold mb-1">子誠</p>
+      <p id="status" class="text-sm bg-yellow-400 text-black px-3 py-1 rounded-full font-bold inline-block">LIVE</p>
+    </div>
+  </div>
+
+  <audio id="audio" preload="metadata"></audio>
+  <canvas id="visualizer" width="400" height="80" class="w-full mb-8"></canvas>
+
+  <div class="flex items-center gap-4 mb-8">
+    <button onclick="prevProg()" class="w-16 h-16 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center text-xl transition-all">⏮</button>
+    <button onclick="playPause()" id="playBtn" class="flex-1 h-16 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 hover:from-yellow-300 text-black font-black text-xl rounded-2xl shadow-2xl hover:shadow-3xl transition-all">
+      ▶ 播放
+    </button>
+    <button onclick="nextProg()" class="w-16 h-16 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center text-xl transition-all">⏭</button>
+  </div>
+
+  <div class="flex items-center gap-4 text-sm">
+    <span>🔈</span>
+    <input type="range" id="volume" min="0" max="1" step="0.01" value="0.8" class="flex-1 h-2 bg-white/20 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-yellow-400 [&::-webkit-slider-thumb]:shadow-lg">
+    <span id="volText">80%</span>
+  </div>
+</div>
+
+<div class="max-w-4xl mx-auto mt-16">
+  <h2 class="text-3xl font-black text-center mb-12 bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">📻 24小時節目表</h2>
+  <div id="schedule" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+</div>
+
+<script>
+// ── 你嘅真實檔案名
+const SCHEDULE = [
+  {id:1, title:"醒晨財經", host:"Mina", emoji:"👩‍💼", jingle:"prog_1_mina_jingle.wav", voice:"mina_sample.wav", color:"#3b82f6", time:"07:00-09:00"},
+  {id:2, title:"實戰交易廳", host:"子誠", emoji:"🧠", jingle:"prog_2_zicheng_jingle.wav", voice:"zicheng_sample.wav", color:"#7c3aed", time:"09:00-12:00"},
+  {id:3, title:"午市急救室", host:"海峰", emoji:"😎", jingle:"prog_3_haifeng_jingle.wav", voice:"haifeng_sample.wav", color:"#f59e0b", time:"12:00-13:00"},
+  {id:4, title:"下半場博弈", host:"子誠", emoji:"📈", jingle:"prog_4_zicheng_jingle.wav", voice:"zicheng_sample.wav", color:"#8b5cf6", time:"13:00-16:10"},
+  {id:5, title:"收市華爾街", host:"子誠", emoji:"🗽", jingle:"prog_5_zicheng_jingle.wav", voice:"zicheng_sample.wav", color:"#ec4899", time:"16:10-18:00"},
+  {id:6, title:"財富學堂", host:"Ray", emoji:"📚", jingle:"prog_6_ray_jingle.wav", voice:"ray_sample.wav", color:"#10b981", time:"18:00-20:00"},
+  {id:7, title:"投資者會客室", host:"Vee", emoji:"🎤", jingle:"prog_7_vee_jingle.wav", voice:"vee_sample.wav", color:"#f97316", time:"20:00-22:00"},
+  {id:8, title:"美股連線", host:"Mina", emoji:"🇺🇸", jingle:"prog_8_mina_jingle.wav", voice:"mina_sample.wav", color:"#06b6d4", time:"22:00-23:30"},
+  {id:9, title:"心靈避風塘", host:"聯武", emoji:"🌙", jingle:"prog_9_lianwu_jingle.wav", voice:"lianwu_sample.wav", color:"#a855f7", time:"23:30-07:00"}
+];
+
+let currentProg = 2; // 默認實戰交易廳
+let isPlaying = false;
+const audio = document.getElementById('audio');
+const canvas = document.getElementById('visualizer');
+const ctx = canvas.getContext('2d');
+
+function updateUI(prog) {
+  document.getElementById('prog-title').textContent = prog.title;
+  document.getElementById('host-name').textContent = prog.host;
+  document.getElementById('avatar').textContent = prog.emoji;
+  document.getElementById('avatar').style.background = `linear-gradient(135deg, ${prog.color}, ${prog.color}88)`;
+  document.getElementById('avatar').style.setProperty('--glow-color', prog.color + '66');
+}
+
+function playProg(id) {
+  const prog = SCHEDULE.find(p => p.id === id);
+  if (!prog) return console.error('節目未找到');
+
+  currentProg = id;
+  updateUI(prog);
+
+  // 先播 jingle 10s，再播主持
+  audio.src = `./${prog.jingle}`;
+  console.log('播緊:', prog.jingle);
+
+  setTimeout(() => {
+    audio.src = `./${prog.voice}`;
+    console.log('播緊主持:', prog.voice);
+  }, 10000);
+
+  if (!isPlaying) {
+    audio.play().catch(e => console.error('播唔到:', e));
+    isPlaying = true;
+    document.getElementById('playBtn').innerHTML = '⏸ 暫停';
+  }
+}
+
+function playPause() {
+  if (isPlaying) {
+    audio.pause();
+    document.getElementById('playBtn').innerHTML = '▶ 播放';
+  } else {
+    audio.play().catch(e => console.error(e));
+    document.getElementById('playBtn').innerHTML = '⏸ 暫停';
+  }
+  isPlaying = !isPlaying;
+}
+
+function nextProg() { playProg((currentProg % 9) + 1); }
+function prevProg() { playProg(currentProg === 1 ? 9 : currentProg - 1); }
+
+// 可視化
+function visualize() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const time = Date.now() * 0.002 + audio.currentTime;
+  for (let i = 0; i < 50; i++) {
+    const barHeight = (Math.sin(time + i * 0.2) * 0.5 + 0.5) * 60 * (isPlaying ? 1 : 0.3);
+    ctx.fillStyle = `hsl(${220 + i}, 70%, ${50 + barHeight}%)`;
+    ctx.fillRect(i * 8, canvas.height - barHeight, 7, barHeight);
+  }
+  requestAnimationFrame(visualize);
+}
+visualize();
+
+// 音量
+document.getElementById('volume').addEventListener('input', e => {
+  audio.volume = e.target.value;
+  document.getElementById('volText').textContent = Math.round(e.target.value * 100) + '%';
+});
+
+// 渲染節目表
+document.getElementById('schedule').innerHTML = SCHEDULE.map((prog, i) => 
+  `<div onclick="playProg(${prog.id})" class="glass p-6 rounded-2xl cursor-pointer hover:scale-[1.02] transition-all group border hover:border-white/30" style="border-color: ${prog.color}40">
+    <div class="flex items-start gap-4">
+      <div class="w-16 h-16 rounded-xl flex items-center justify-center text-2xl font-black mt-1 flex-shrink-0" style="background: ${prog.color}55">${prog.emoji}</div>
+      <div class="flex-1 min-w-0">
+        <p class="font-black text-lg leading-tight group-hover:text-white mb-1">${prog.title}</p>
+        <p class="text-sm text-white/70 font-medium">${prog.host} • ${prog.time}</p>
+        <p class="text-xs text-white/50 mt-1">獨立 Jingle + 主持</p>
+      </div>
+    </div>
+  </div>`
+).join('');
+
+// 啟動：實戰交易廳
+playProg(2);
+</script>
+</body>
+</html>

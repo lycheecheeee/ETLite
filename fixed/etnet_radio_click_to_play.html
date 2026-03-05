@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>etnet Radio - Click to Play</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+* { font-family: 'Noto Sans TC', sans-serif; }
+body { 
+  background: radial-gradient(ellipse at top, #1e1e3f 0%, #0f0f23 70%); 
+  min-height: 100vh; 
+}
+.glass { 
+  background: rgba(255,255,255,0.08); 
+  backdrop-filter: blur(24px); 
+  border: 1px solid rgba(255,255,255,0.15); 
+  box-shadow: 0 25px 45px rgba(0,0,0,0.3); 
+}
+#bigPlay { 
+  width: 120px; height: 120px; 
+  background: linear-gradient(135deg, #f59e0b, #f97316); 
+  box-shadow: 0 20px 40px rgba(245,158,11,0.4); 
+}
+.live-badge { animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+.wave-bar { animation: wave 1.5s ease-in-out infinite; }
+@keyframes wave { 0%,100%{height:20px} 50%{height:60px} }
+</style>
+</head>
+<body class="p-4 md:p-8 text-white flex flex-col items-center justify-center min-h-screen">
+
+<!-- 主播放器 -->
+<main class="glass rounded-3xl p-8 md:p-12 max-w-lg w-full text-center mb-12">
+  <div class="live-badge inline-block w-3 h-3 bg-red-400 rounded-full mb-6 mx-auto"></div>
+
+  <div id="currentProg" class="mb-8">
+    <div id="avatar" class="w-32 h-32 md:w-40 md:h-40 mx-auto rounded-2xl flex items-center justify-center text-5xl font-black mb-6 mx-auto shadow-2xl" style="--glow-color: rgba(124,58,237,0.7); background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); box-shadow: 0 0 40px var(--glow-color);">
+      🧠
+    </div>
+    <h1 id="progTitle" class="text-2xl md:text-3xl font-black mb-3 bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent tracking-tight">實戰交易廳 Trading Floor</h1>
+    <p id="hostName" class="text-xl md:text-2xl font-bold text-purple-300 mb-2">子誠</p>
+    <p class="text-lg text-yellow-300 font-semibold">智者派 • 09:00-12:00 • LIVE</p>
+  </div>
+
+  <div class="mb-10">
+    <canvas id="waveform" width="400" height="80" class="w-full max-w-md mx-auto rounded-2xl bg-black/30 border border-white/20 mb-8 block"></canvas>
+    <audio id="player" preload="none"></audio>
+
+    <div class="flex items-center justify-center gap-6">
+      <button onclick="prevStation()" class="w-20 h-20 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-sm text-2xl transition-all hover:scale-110">⏮</button>
+
+      <button id="mainPlay" onclick="startRadio()" class="w-32 h-32 md:w-36 md:h-36 rounded-2xl flex items-center justify-center text-4xl md:text-5xl font-black shadow-2xl hover:shadow-3xl transition-all hover:scale-105 #bigPlay">
+        ▶
+      </button>
+
+      <button onclick="nextStation()" class="w-20 h-20 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-sm text-2xl transition-all hover:scale-110">⏭</button>
+    </div>
+
+    <div class="flex items-center justify-center gap-4 mt-8 pt-6 border-t border-white/10">
+      <span class="text-sm">🔈</span>
+      <input type="range" id="volumeCtrl" min="0" max="1" step="0.01" value="0.8" class="w-48 md:w-64 h-2 bg-white/20 rounded-full cursor-pointer appearance-none accent-yellow-400 hover:accent-yellow-300 [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-lg">
+      <span id="volDisplay" class="text-sm font-mono">80%</span>
+    </div>
+  </div>
+</main>
+
+<!-- 快速切換 -->
+<section class="w-full max-w-4xl glass rounded-2xl p-6 md:p-8">
+  <h2 class="text-2xl md:text-3xl font-black text-center mb-8 bg-gradient-to-r from-white via-blue-100 to-purple-200 bg-clip-text text-transparent">📻 全天候節目</h2>
+  <div id="stations" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-6xl mx-auto"></div>
+</section>
+
+<script>
+// ── 你嘅真實檔案 (完美匹配)
+const STATIONS = [
+  {id:"prog1", name:"醒晨財經", host:"Mina", emoji:"👩‍💼", jingle:"prog_1_mina_jingle.wav", voice:"mina_sample.wav", color:"#3b82f6", time:"07:00"},
+  {id:"prog2", name:"實戰交易廳", host:"子誠", emoji:"🧠", jingle:"prog_2_zicheng_jingle.wav", voice:"zicheng_sample.wav", color:"#7c3aed", time:"09:00"},
+  {id:"prog3", name:"午市急救室", host:"海峰", emoji:"😎", jingle:"prog_3_haifeng_jingle.wav", voice:"haifeng_sample.wav", color:"#f59e0b", time:"12:00"},
+  {id:"prog4", name:"下半場博弈", host:"子誠", emoji:"📈", jingle:"prog_4_zicheng_jingle.wav", voice:"zicheng_sample.wav", color:"#8b5cf6", time:"13:00"},
+  {id:"prog5", name:"收市華爾街", host:"子誠", emoji:"🗽", jingle:"prog_5_zicheng_jingle.wav", voice:"zicheng_sample.wav", color:"#ec4899", time:"16:10"},
+  {id:"prog6", name:"財富學堂", host:"Ray", emoji:"📚", jingle:"prog_6_ray_jingle.wav", voice:"ray_sample.wav", color:"#10b981", time:"18:00"},
+  {id:"prog7", name:"投資者會客室", host:"Vee", emoji:"🎤", jingle:"prog_7_vee_jingle.wav", voice:"vee_sample.wav", color:"#f97316", time:"20:00"},
+  {id:"prog8", name:"美股連線", host:"Mina", emoji:"🇺🇸", jingle:"prog_8_mina_jingle.wav", voice:"mina_sample.wav", color:"#06b6d4", time:"22:00"},
+  {id:"prog9", name:"心靈避風塘", host:"聯武", emoji:"🌙", jingle:"prog_9_lianwu_jingle.wav", voice:"lianwu_sample.wav", color:"#a855f7", time:"23:30"}
+];
+
+let currentStation = STATIONS[1]; // 子誠
+let playerUnlocked = false;
+const player = document.getElementById('player');
+const canvas = document.getElementById('waveform');
+const ctx = canvas.getContext('2d');
+
+// 🎵 開始廣播
+function startRadio() {
+  if (playerUnlocked) {
+    togglePlay();
+    return;
+  }
+
+  console.log('🔓 用戶互動解鎖 audio');
+  playerUnlocked = true;
+
+  // 播 jingle 先
+  player.src = `./${currentStation.jingle}`;
+  console.log('🎵 播緊 Jingle:', currentStation.jingle);
+
+  player.play().then(() => {
+    document.getElementById('mainPlay').innerHTML = '⏸';
+    document.getElementById('mainPlay').classList.add('animate-pulse');
+    console.log('✅ Jingle 播緊...');
+
+    // 10s 後播主持
+    setTimeout(() => {
+      player.src = `./${currentStation.voice}`;
+      console.log('🗣️ 切主持:', currentStation.voice);
+    }, 10000);
+  }).catch(e => {
+    console.error('❌ 播唔到:', e);
+    alert('播唔到聲音，檢查 Console (F12)');
+  });
+}
+
+function togglePlay() {
+  if (player.paused) {
+    player.play();
+    document.getElementById('mainPlay').innerHTML = '⏸';
+  } else {
+    player.pause();
+    document.getElementById('mainPlay').innerHTML = '▶';
+  }
+}
+
+function switchStation(station) {
+  currentStation = station;
+  updateDisplay();
+  if (playerUnlocked) startRadio();
+}
+
+// 更新 UI
+function updateDisplay() {
+  document.getElementById('progTitle').textContent = currentStation.name;
+  document.getElementById('hostName').textContent = currentStation.host;
+  document.getElementById('avatar').textContent = currentStation.emoji;
+  document.getElementById('avatar').style.background = `linear-gradient(135deg, ${currentStation.color}, ${currentStation.color}88)`;
+}
+
+// 可視化
+let vizTime = 0;
+function visualize() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const isActive = playerUnlocked && !player.paused;
+  for (let i = 0; i < 25; i++) {
+    const height = 15 + Math.sin(vizTime * 0.1 + i * 0.3) * 45 * (isActive ? 1 : 0.4);
+    ctx.fillStyle = `hsl(${240 + i * 3}, 70%, ${40 + height}%)`;
+    ctx.fillRect(i * 16, canvas.height - height, 14, height);
+  }
+  vizTime += 1;
+  requestAnimationFrame(vizualize);
+}
+visualize();
+
+// 音量控制
+document.getElementById('volumeCtrl').addEventListener('input', (e) => {
+  player.volume = e.target.value;
+  document.getElementById('volDisplay').textContent = Math.round(e.target.value * 100) + '%';
+});
+
+// 前後切換
+function prevStation() { 
+  const idx = STATIONS.indexOf(currentStation);
+  currentStation = STATIONS[(idx - 1 + STATIONS.length) % STATIONS.length]; 
+  updateDisplay(); 
+}
+function nextStation() { 
+  const idx = STATIONS.indexOf(currentStation);
+  currentStation = STATIONS[(idx + 1) % STATIONS.length]; 
+  updateDisplay(); 
+}
+
+// 渲染節目表
+document.getElementById('stations').innerHTML = STATIONS.map(s => `
+  <div onclick="switchStation(${JSON.stringify(s)})" class="glass p-5 rounded-xl cursor-pointer hover:scale-105 transition-all hover:shadow-2xl border hover:border-white/40 group" style="border-color: ${s.color}40">
+    <div class="flex items-center gap-4">
+      <div class="w-20 h-20 rounded-xl flex items-center justify-center text-3xl font-black flex-shrink-0 shadow-lg" style="background: ${s.color}55">${s.emoji}</div>
+      <div class="flex-1 text-left">
+        <p class="font-black text-lg leading-tight">${s.name}</p>
+        <p class="text-sm text-white/80 font-semibold">${s.host}</p>
+        <p class="text-xs text-white/50">${s.time} Jingle Ready</p>
+      </div>
+    </div>
+  </div>
+`).join('');
+
+updateDisplay();
+console.log('✅ etnet Radio ready - Click ▶ to start!');
+</script>
+</body>
+</html>

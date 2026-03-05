@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>etnet Radio — 眼觀大市，耳聽玄機</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap");
+*{font-family:"Noto Sans TC",sans-serif;}
+body{background:linear-gradient(135deg,#0d0d1a,#1a1a2e);}
+.glass{background:rgba(255,255,255,0.06);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.1);}
+.live-dot{width:8px;height:8px;background:#ef4444;border-radius:50%;animation:livePulse 1.2s ease infinite;}
+@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.8)}}
+.host-glow{box-shadow:0 0 20px var(--glow-color);}
+#waveform{opacity:0.7;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#f59e0b;cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:rgba(255,255,255,0.2);}
+.station-ticker{animation:stationScroll 20s linear infinite;}
+@keyframes stationScroll{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+.prog-card:hover{transform:translateY(-2px);}
+.prog-card.active{border-color:#f59e0b;background:rgba(245,158,11,0.1);}
+</style>
+</head>
+<body class="min-h-screen text-white p-4">
+
+<!-- Station ID -->
+<div class="overflow-hidden bg-black bg-opacity-40 py-2 border-b border-white border-opacity-10 mb-6">
+  <div class="station-ticker text-xs font-medium text-yellow-300 whitespace-nowrap px-4">
+    你而家收聽緊：etnet Radio，眼觀大市，耳聽玄機。&nbsp;｜&nbsp;etnet Radio，陪你由開市到入睡。&nbsp;｜&nbsp;香港唯一24小時AI財經電台
+  </div>
+</div>
+
+<!-- Player -->
+<div class="glass rounded-3xl p-6 mb-8 max-w-md mx-auto">
+  <div class="flex items-center gap-4 mb-4">
+    <div class="live-dot"></div>
+    <div class="flex-1">
+      <p class="font-bold text-sm" id="host-name">子誠</p>
+      <p class="text-xs text-white text-opacity-60" id="host-style">智者派</p>
+    </div>
+  </div>
+  <div class="flex items-center justify-center gap-4 mb-6">
+    <div class="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-black host-glow"
+      id="host-avatar" style="--glow-color:rgba(124,58,237,0.5);background:linear-gradient(135deg,#7c3aed,#4f46e5)">
+      🧠
+    </div>
+  </div>
+  <div class="text-center mb-6">
+    <p class="text-lg font-bold mb-1" id="prog-title">《實戰交易廳 Trading Floor》</p>
+    <p class="text-xs text-white text-opacity-60" id="prog-time">09:00 – 12:00</p>
+  </div>
+  <canvas id="waveform" width="300" height="40" class="w-full mb-6 rounded-lg"></canvas>
+  <div class="flex items-center gap-3 mb-4">
+    <button onclick="togglePlay()" id="play-btn" 
+      class="flex-1 bg-yellow-400 hover:bg-yellow-300 text-black py-3 rounded-xl font-black text-xl">
+      ▶ 播放
+    </button>
+    <button onclick="toggleMute()" id="mute-btn" class="w-12 h-12 rounded-xl bg-white bg-opacity-20 flex items-center justify-center">
+      🔊
+    </button>
+  </div>
+  <div class="flex items-center gap-2">
+    <span class="text-xs">🔈</span>
+    <input type="range" id="volume" min="0" max="1" step="0.1" value="0.8" class="flex-1">
+    <span class="text-xs">🔊</span>
+  </div>
+</div>
+
+<!-- Schedule -->
+<div class="max-w-2xl mx-auto">
+  <h2 class="font-black text-xl mb-6 text-center">📋 今日節目表</h2>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="schedule">
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────
+const HOSTS = [
+  {id:"mina",name:"Mina",style:"新聞主播",emoji:"👩‍💼",color:"#3b82f6",glow:"rgba(59,130,246,0.5)",progs:["醒晨財經","美股連線"]},
+  {id:"zicheng",name:"子誠",style:"智者派",emoji:"🧠",color:"#7c3aed",glow:"rgba(124,58,237,0.5)",progs:["實戰交易廳","下半場博弈","收市華爾街"]},
+  {id:"haifeng",name:"海峰",style:"鬼馬派",emoji:"😎",color:"#f59e0b",glow:"rgba(245,158,11,0.5)",progs:["午市急救室"]},
+  {id:"ray",name:"Ray",style:"教學型",emoji:"📚",color:"#10b981",glow:"rgba(16,185,129,0.5)",progs:["財富學堂"]},
+  {id:"vee",name:"Vee",style:"訪談型",emoji:"🎤",color:"#ec4899",glow:"rgba(236,72,153,0.5)",progs:["投資者會客室"]},
+  {id:"lianwu",name:"聯武",style:"療癒派",emoji:"🌙",color:"#6366f1",glow:"rgba(99,102,241,0.5)",progs:["心靈避風塘"]},
+];
+
+const SCHEDULE = [
+  {time:"07:00",end:"09:00",title:"醒晨財經 Morning Call",host:"mina",desc:"清晰快報，重點財經資訊開啟你的一天"},
+  {time:"09:00",end:"12:00",title:"實戰交易廳 Trading Floor",host:"zicheng",desc:"深度拆局，資金流向解讀，掌握大市脈搏"},
+  {time:"12:00",end:"13:00",title:"午市急救室 Mid-day Rescue",host:"haifeng",desc:"鬼馬快嘴，午市整理，幫你定驚"},
+  {time:"13:00",end:"16:10",title:"下半場博弈 Second Half",host:"zicheng",desc:"子誠＋Mina輪流主持，策略＋即市快訊"},
+  {time:"16:10",end:"18:00",title:"收市華爾街 Closing Bell",host:"zicheng",desc:"收市覆盤、贏輸家、翌日部署"},
+  {time:"18:00",end:"20:00",title:"財富學堂 Wealth Academy",host:"ray",desc:"拆概念、教工具、慢速易入口"},
+  {time:"20:00",end:"22:00",title:"投資者會客室 Investor Lounge",host:"vee",desc:"訪問剪輯＋AI重點摘要"},
+  {time:"22:00",end:"23:30",title:"美股連線 US Market Live",host:"mina",desc:"盤前重點＋開市後快訊"},
+  {time:"23:30",end:"07:00",title:"心靈避風塘 Midnight Harbour",host:"lianwu",desc:"療癒音樂、睡前陪伴、低刺激放鬆"},
+];
+
+// ── AUDIO ─────────────────────────────────────────────────
+const audio = new Audio();
+audio.volume = 0.8;
+let isPlaying = false, currentTrack = 0;
+const TRACKS = [
+  "hosts/zicheng_sample.wav",
+  "hosts/mina_sample.wav", 
+  "hosts/haifeng_sample.wav",
+  "etnet_radio_demo.wav"
+];
+
+// ── WAVEFORM ──────────────────────────────────────────────
+const canvas = document.getElementById("waveform");
+const ctx = canvas.getContext("2d");
+function drawWaveform(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const barWidth = canvas.width / 40;
+  for(let i=0;i<40;i++){
+    const h = 4 + Math.random()*16 * (isPlaying ? 1 : 0.4);
+    ctx.fillStyle = `hsl(${240 + i*2}, 70%, ${50 + h*2}%)`;
+    ctx.fillRect(i*barWidth, canvas.height - h, barWidth-1, h);
+  }
+}
+
+// ── CONTROL ───────────────────────────────────────────────
+function togglePlay(){
+  isPlaying = !isPlaying;
+  const btn = document.getElementById("play-btn");
+  if(isPlaying){
+    if(audio.paused){
+      audio.src = TRACKS[currentTrack % TRACKS.length];
+      audio.play();
+    } else {
+      audio.play();
+    }
+    btn.innerHTML = '<span class="text-lg">⏸</span> 暫停';
+    btn.className = "flex-1 bg-white hover:bg-gray-100 text-black py-3 rounded-xl font-black text-xl shadow-lg";
+  } else {
+    audio.pause();
+    btn.innerHTML = '<span class="text-lg">▶</span> 播放';
+    btn.className = "flex-1 bg-yellow-400 hover:bg-yellow-300 text-black py-3 rounded-xl font-black text-xl shadow-lg";
+  }
+}
+
+function toggleMute(){
+  audio.muted = !audio.muted;
+  document.getElementById("mute-btn").textContent = audio.muted ? "🔇" : "🔊";
+}
+
+document.getElementById("volume").addEventListener("input", e => {
+  audio.volume = e.target.value;
+});
+
+// ── SCHEDULE ──────────────────────────────────────────────
+function getCurrentProg(){
+  const now = new Date();
+  const cur = now.getHours() * 60 + now.getMinutes();
+  for(const p of SCHEDULE){
+    const [sh,sm] = p.time.split(":").map(Number);
+    const [eh,em] = p.end.split(":").map(Number);
+    const s = sh*60 + sm, e = eh*60 + em;
+    if((cur >= s && cur < e) || (s > e && (cur >= s || cur < e))) return p;
+  }
+  return SCHEDULE[0];
+}
+
+function updateNowPlaying(){
+  const p = getCurrentProg();
+  const h = HOSTS.find(x=>x.id === p.host);
+  document.getElementById("prog-title").textContent = p.title;
+  document.getElementById("prog-time").textContent = `${p.time} – ${p.end}`;
+  document.getElementById("host-name").textContent = h ? h.name : p.host;
+  document.getElementById("host-style").textContent = h ? h.style : "";
+  document.getElementById("host-avatar").textContent = h ? h.emoji : "🎙️";
+  document.getElementById("host-avatar").style.background = h ? `linear-gradient(135deg,${h.color},${h.color}88)` : "linear-gradient(135deg,#6366f1,#4f46e5)";
+}
+
+function renderSchedule(){
+  const cur = getCurrentProg();
+  document.getElementById("schedule").innerHTML = SCHEDULE.map(p => {
+    const h = HOSTS.find(x=>x.id === p.host);
+    const isCur = p === cur;
+    return `<div class="prog-card glass rounded-xl p-4 cursor-pointer border ${isCur ? "border-yellow-400 bg-yellow-500/5" : "border-transparent"} hover:border-white hover:border-opacity-30 transition-all"
+      onclick="setCurrent('${p.host}','${p.title}','${p.time} – ${p.end}')">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-black" 
+          style="background:${h ? h.color + '44' : '#6366f133'}">
+          ${h ? h.emoji : "🎙️"}
+        </div>
+        <div class="flex-1">
+          <p class="font-bold text-sm">${p.title}</p>
+          <p class="text-xs text-white text-opacity-50">${p.time} – ${p.end}</p>
+        </div>
+        ${isCur ? '<div class="text-xs bg-yellow-400 text-black px-2 py-0.5 rounded-full font-bold">ON AIR</div>' : ''}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function setCurrent(host,title,time){
+  const h = HOSTS.find(x=>x.id === host);
+  document.getElementById("prog-title").textContent = title;
+  document.getElementById("prog-time").textContent = time;
+  document.getElementById("host-name").textContent = h.name;
+  document.getElementById("host-style").textContent = h.style;
+  document.getElementById("host-avatar").textContent = h.emoji;
+  document.getElementById("host-avatar").style.background = `linear-gradient(135deg,${h.color},${h.color}88)`;
+  document.getElementById("host-avatar").style.setProperty("--glow-color", h.glow);
+  currentTrack = HOSTS.findIndex(x=>x.id === host);
+  togglePlay();
+}
+
+// ── INIT ──────────────────────────────────────────────────
+updateNowPlaying();
+renderSchedule();
+setInterval(()=>{
+  updateNowPlaying();
+  drawWaveform();
+}, 5000);
+drawWaveform();
+
+audio.addEventListener("ended", () => {
+  currentTrack = (currentTrack + 1) % TRACKS.length;
+  togglePlay();
+});
+audio.addEventListener("timeupdate", () => {
+  if(!isPlaying) return;
+  const progress = (audio.currentTime / audio.duration) * 100;
+  // 可以加進度條
+});
+</script>
+</body>
+</html>
