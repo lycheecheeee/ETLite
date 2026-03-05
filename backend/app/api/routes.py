@@ -11,6 +11,7 @@ from app.db.database import get_db
 from app.db.models import User, Podcast, ContentAtom
 from app.services.podcast_generator import podcast_generator
 from app.services.websocket_manager import ws_manager
+from app.services.chatbot_service import chatbot
 
 router = APIRouter()
 
@@ -30,6 +31,11 @@ class MessageRequest(BaseModel):
     user_id: str
     message: str
     podcast_id: Optional[str] = None
+
+class ChatRequest(BaseModel):
+    message: str
+    context: Optional[List[dict]] = None
+    user_profile: Optional[UserProfileRequest] = None
 
 
 # User Routes
@@ -118,6 +124,31 @@ async def play_podcast(podcast_id: str, db: AsyncSession = Depends(get_db)):
     """Track podcast playback"""
     # Increment play count
     return {"status": "ok"}
+
+
+# Chat Routes
+@router.post("/chat", response_model=dict)
+async def chat_with_leung_zai(request: ChatRequest):
+    """Chat with Leung Zai AI assistant"""
+    try:
+        result = await chatbot.chat(
+            user_message=request.message,
+            conversation_history=request.context,
+            user_profile=request.user_profile.dict() if request.user_profile else None
+        )
+        
+        return {
+            "response": result["response"],
+            "suggested_questions": result["suggested_questions"],
+            "confidence": result["confidence"]
+        }
+    except Exception as e:
+        print(f"[API] Chat error: {e}")
+        return {
+            "response": "對唔住，我而家有啲忙緊。請稍後再試啦！",
+            "suggested_questions": ["今日恒指點睇？", "邊隻股票值得買？"],
+            "confidence": "error"
+        }
 
 
 # Content Atom Routes

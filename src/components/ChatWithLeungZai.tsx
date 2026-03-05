@@ -36,54 +36,36 @@ export function ChatWithLeungZai() {
     scrollToBottom()
   }, [messages])
 
-  // 模擬 AI 回應（之後可以接真實 API）
-  const generateAIResponse = async (userMessage: string): Promise<string> => {
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000))
-    
-    const responses: Record<string, string[]> = {
-      greeting: [
-        "早晨啊！今日恒指高開，心情都好啲啦！",
-        "哈囉！想知今日邊隻股票值得買？",
-        "你好呀！有咩投資問題想問我？"
-      ],
-      market: [
-        "今日恒指升 256 點，科技股領漲。騰訊升 3%，美團升 5%。短線睇好，但都要小心阻力位。",
-        "市場情緒而家幾樂觀，成交額增加到 1200 億。建議關注科網股同內房股。",
-        "外圍美股昨晚齊升，利好港股。不過要留意 18500 點阻力。"
-      ],
-      stock: [
-        "騰訊 (0700) 而家報 368 元，PE 約 20 倍，估值合理。業績強勁，遊戲業務復甦，中長線睇好。",
-        "美團 (3690) 突破 130 元關口，外賣業務增長穩定，新業務減虧，值得中線持有。",
-        "阿里 (9988) 喺 80 元左右上落，等待新催化劑。雲計算業務係亮點。"
-      ],
-      advice: [
-        "投資要分散風險，唔好将所有資金放入一隻股票。建議 60% 藍籌 + 40% 成長股。",
-        "新手建議由指数基金開始，例如盈富基金 (2800)，費用低又分散風險。",
-        "記住口訣：『唔好貪心，設好止蝕』。一般建議止蝕位設在买入價的 -8% 到 -10%。"
-      ],
-      default: [
-        "明白你嘅問題。從技術分析黎睇，而家個市處於上升趨勢，但都要小心回調風險。",
-        "呢個問題好好！我認為要考慮多個因素：宏觀經濟、公司基本面、技術指標。",
-        "多謝你嘅提問！根據我嘅分析，建議你..."
-      ]
+  // 呼叫真實 AI API
+  const generateAIResponse = async (userMessage: string): Promise<{response: string, suggested: string[]}> => {
+    try {
+      // 呼叫後端 AI API
+      const response = await fetch('http://localhost:8000/api/v1/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage,
+          context: messages.slice(-4).map(m => ({ role: m.role, content: m.content }))
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        return {
+          response: data.response,
+          suggested: data.suggested_questions || []
+        }
+      }
+    } catch (error) {
+      console.error('AI API Error:', error)
     }
 
-    // 簡單關鍵詞匹配
-    const lowerMsg = userMessage.toLowerCase()
-    let category = 'default'
-    
-    if (lowerMsg.includes('早晨') || lowerMsg.includes('你好') || lowerMsg.includes('哈囉')) {
-      category = 'greeting'
-    } else if (lowerMsg.includes('恒指') || lowerMsg.includes('大市') || lowerMsg.includes('市場')) {
-      category = 'market'
-    } else if (lowerMsg.includes('騰訊') || lowerMsg.includes('美團') || lowerMsg.includes('阿里') || lowerMsg.includes('股')) {
-      category = 'stock'
-    } else if (lowerMsg.includes('建議') || lowerMsg.includes('點樣') || lowerMsg.includes('應該')) {
-      category = 'advice'
+    // Fallback: 本地簡單回應
+    await new Promise(resolve => setTimeout(resolve, 800))
+    return {
+      response: `多謝你嘅問題：「${userMessage}」\n\n我而家仲學習緊，暫時答得唔夠好。不如試下問：\n• 今日恒指點睇？\n• 騰訊值唔值得買？\n• 新手點開始投資？`,
+      suggested: ["今日恒指點睇？", "邊隻股票值得買？", "點樣分散風險？"]
     }
-
-    const options = responses[category]
-    return options[Math.floor(Math.random() * options.length)]
   }
 
   const handleSend = async () => {
@@ -101,16 +83,22 @@ export function ChatWithLeungZai() {
     setIsTyping(true)
 
     try {
-      const aiResponse = await generateAIResponse(userMessage.content)
+      const { response, suggested } = await generateAIResponse(userMessage.content)
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: aiResponse,
+        content: response,
         timestamp: new Date()
       }
 
       setMessages(prev => [...prev, assistantMessage])
+      
+      // 添加建議問題（如果有）
+      if (suggested && suggested.length > 0) {
+        // 可以喺 UI 度顯示建議問題
+        console.log('Suggested:', suggested)
+      }
     } catch (error) {
       console.error('Error generating response:', error)
     } finally {
