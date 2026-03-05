@@ -46,7 +46,6 @@ export function AINewsPodcast() {
   const [podcast, setPodcast] = useState<PodcastData | null>(null)
   const [currentSegment, setCurrentSegment] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
   
   const audioRef = useRef<HTMLAudioElement>(null)
 
@@ -64,7 +63,9 @@ export function AINewsPodcast() {
     const audio = audioRef.current
     if (!audio) return
 
-    const updateTime = () => setCurrentTime(audio.currentTime)
+    const updateTime = () => {
+      // Progress tracking handled by timeupdate event
+    }
     const handleEnded = () => {
       setIsPlaying(false)
       if (currentSegment < (podcast?.segments.length || 0) - 1) {
@@ -301,7 +302,9 @@ export function AINewsPodcast() {
                   onClick={() => {
                     setCurrentSegment(idx)
                     setIsPlaying(true)
-                    setCurrentTime(0)
+                    if (audioRef.current) {
+                      audioRef.current.currentTime = 0
+                    }
                   }}
                 >
                   <div className="flex items-center justify-between">

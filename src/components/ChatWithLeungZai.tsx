@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-import { Send, Mic, Sparkles, User, Bot, Volume2, Copy, ThumbsUp, RotateCcw } from 'lucide-react'
+import { Send, Mic, Sparkles, User, Bot, Volume2, Copy, ThumbsUp } from 'lucide-react'
 
 interface Message {
   id: string

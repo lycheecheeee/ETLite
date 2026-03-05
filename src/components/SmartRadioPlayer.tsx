@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { 
   Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, 
-  Mic2, Radio, Disc, Music, Sparkles, Activity, MessageCircle
+  Mic2, Radio, Disc, Music, Sparkles, Activity
 } from 'lucide-react'
 
 interface SmartSegment {
