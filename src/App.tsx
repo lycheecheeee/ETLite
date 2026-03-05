@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { PlayCircle, Radio, Atom, Sparkles, Menu, X, User, Settings, Bell, Mic2 } from 'lucide-react'
+import { PlayCircle, Radio, Atom, Sparkles, Menu, X, User, Settings, Bell, Mic2, MessageCircle } from 'lucide-react'
 import { UserProfileTest, type UserProfile } from './components/UserProfileTest'
 import { PodcastPlayer } from './components/PodcastPlayer'
 import { ContentAtoms } from './components/ContentAtoms'
 import { GammaMode } from './components/GammaMode'
 import { InteractiveRadio } from './components/InteractiveRadio'
+import { ChatWithLeungZai } from './components/ChatWithLeungZai'
 
-type Tab = 'profile' | 'podcast' | 'radio' | 'atoms' | 'gamma'
+type Tab = 'profile' | 'chat' | 'radio' | 'podcast' | 'atoms' | 'gamma'
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('profile')
@@ -21,6 +22,7 @@ function App() {
 
   const navItems = [
     { id: 'profile' as Tab, label: '個人化測試', icon: User },
+    { id: 'chat' as Tab, label: '同叻仔傾計', icon: MessageCircle },
     { id: 'radio' as Tab, label: '互動電台', icon: Mic2 },
     { id: 'podcast' as Tab, label: 'AI 播客', icon: PlayCircle },
     { id: 'atoms' as Tab, label: '內容原子', icon: Atom },
@@ -182,6 +184,18 @@ function App() {
                   </button>
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'chat' && (
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-8 space-y-2">
+                <h2 className="text-3xl font-bold glow-text">同叻仔傾計</h2>
+                <p className="text-muted-foreground">
+                  AI 粵語理財助手，有問必答，陪你投資路上不孤單
+                </p>
+              </div>
+              <ChatWithLeungZai />
             </div>
           )}
 
