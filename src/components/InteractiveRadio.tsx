@@ -23,7 +23,7 @@ const radioSegments: AudioSegment[] = [
     host: 'zicheng',
     title: '開場 - 晨早開市前瞻',
     content: '各位 Net 仔家族嘅朋友，早晨！我係子程。今日恒指高開 256 點，科技股領漲，我哋即刻睇下今日有咩焦點...',
-    audioFile: '/dialogue/00_zicheng.wav',
+    audioFile: '/audio/dialogue/00_zicheng.wav',
     duration: 15.6,
     type: 'intro',
     transcript: '早晨！我係子程，歡迎收聽 Net 仔財經早新聞...'
@@ -33,7 +33,7 @@ const radioSegments: AudioSegment[] = [
     host: 'mina',
     title: '個股分析 - 騰訊業績',
     content: '多謝子程。我係敏娜。騰訊尋晚公佈業績，全年盈利增長 25%，遊戲業務強勁...',
-    audioFile: '/dialogue/01_mina.wav',
+    audioFile: '/audio/dialogue/01_mina.wav',
     duration: 4.0,
     type: 'stock',
     transcript: '多謝子程。騰訊業績超預期...'
@@ -43,7 +43,7 @@ const radioSegments: AudioSegment[] = [
     host: 'zicheng',
     title: '板塊輪動 - 科技股',
     content: '講到科技股，今日阿里巴巴都升埋一份，科網股集體反彈...',
-    audioFile: '/dialogue/02_zicheng.wav',
+    audioFile: '/audio/dialogue/02_zicheng.wav',
     duration: 11.7,
     type: 'market',
     transcript: '科技股今日全線上漲...'
@@ -53,7 +53,7 @@ const radioSegments: AudioSegment[] = [
     host: 'mina',
     title: '聽眾互動環節',
     content: '而家到我哋嘅互動時間啦！收到 WhatsApp 消息，陳先生問：「而家追入騰訊合唔合適？」',
-    audioFile: '/dialogue/03_mina.wav',
+    audioFile: '/audio/dialogue/03_mina.wav',
     duration: 9.1,
     type: 'interaction',
     transcript: '聽眾來電：而家追入騰訊合適嗎？'
@@ -63,7 +63,7 @@ const radioSegments: AudioSegment[] = [
     host: 'zicheng',
     title: '專家回應',
     content: '陳先生好問題。我個人建議係...短期技術指標顯示超買，但長線基本面仍然向好...',
-    audioFile: '/dialogue/04_zicheng.wav',
+    audioFile: '/audio/dialogue/04_zicheng.wav',
     duration: 10.3,
     type: 'interaction',
     transcript: '子程回應：建議分段建倉...'
@@ -73,7 +73,7 @@ const radioSegments: AudioSegment[] = [
     host: 'mina',
     title: '快速市場情報',
     content: '插播一則快訊：人行宣佈降準 0.25 個百分點，釋放流動性約 5000 億...',
-    audioFile: '/dialogue/05_mina.wav',
+    audioFile: '/audio/dialogue/05_mina.wav',
     duration: 2.8,
     type: 'market',
     transcript: '人行降準利好股市...'
@@ -83,7 +83,7 @@ const radioSegments: AudioSegment[] = [
     host: 'zicheng',
     title: '午後策略',
     content: '收到呢個消息，預計午後恒指會進一步上試 18500 點阻力位...',
-    audioFile: '/dialogue/06_zicheng.wav',
+    audioFile: '/audio/dialogue/06_zicheng.wav',
     duration: 13.3,
     type: 'market',
     transcript: '午後展望：上試阻力位...'
@@ -93,7 +93,7 @@ const radioSegments: AudioSegment[] = [
     host: 'mina',
     title: '結語 + 預告',
     content: '好啦，今日早節節目去到呢度。下午 5 點我哋再為大家帶來收市回顧，記得繼續收聽 Net 仔啦！',
-    audioFile: '/dialogue/07_mina.wav',
+    audioFile: '/audio/dialogue/07_mina.wav',
     duration: 7.5,
     type: 'closing',
     transcript: '多謝收聽，下午見！'

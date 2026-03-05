@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { PlayCircle, Radio, Atom, Sparkles, Menu, X, User, Settings, Bell, Mic2, MessageCircle, Newspaper } from 'lucide-react'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { UserProfileTest, type UserProfile } from './components/UserProfileTest'
 import { PodcastPlayer } from './components/PodcastPlayer'
 import { ContentAtoms } from './components/ContentAtoms'
@@ -34,7 +35,8 @@ function App() {
   ]
 
   return (
-    <div className="min-h-screen relative">
+    <ErrorBoundary>
+      <div className="min-h-screen relative">
       {/* 宇宙背景 */}
       <div className="cosmic-bg" />
       
@@ -286,7 +288,8 @@ function App() {
           </p>
         </div>
       </footer>
-    </div>
+      </div>
+    </ErrorBoundary>
   )
 }
 

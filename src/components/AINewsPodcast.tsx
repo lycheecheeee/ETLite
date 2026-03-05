@@ -94,23 +94,39 @@ export function AINewsPodcast() {
     setIsGenerating(true)
     setPodcast(null)
     
+    const backendUrl = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:8000'
+    
     try {
-      const response = await fetch('http://localhost:8000/api/v1/news-podcast/generate', {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30秒超時
+
+      const response = await fetch(`${backendUrl}/api/v1/news-podcast/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           focus_topic: selectedTopic,
           categories: selectedCategories,
           limit: 15
-        })
+        }),
+        signal: controller.signal
       })
       
-      if (!response.ok) throw new Error('生成失敗')
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        console.warn('API response not ok:', response.status, response.statusText)
+        throw new Error(`生成失敗 (${response.status})`)
+      }
       
       const data = await response.json()
       setPodcast(data.podcast)
     } catch (error) {
-      console.error('Failed to generate podcast:', error)
+      if (error.name === 'AbortError') {
+        console.warn('Podcast generation timeout')
+      } else {
+        console.error('Failed to generate podcast:', error)
+      }
+      
       // Mock data for demo
       setTimeout(() => {
         setPodcast({

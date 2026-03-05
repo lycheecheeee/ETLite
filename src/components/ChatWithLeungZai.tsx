@@ -38,26 +38,40 @@ export function ChatWithLeungZai() {
 
   // 呼叫真實 AI API
   const generateAIResponse = async (userMessage: string): Promise<{response: string, suggested: string[]}> => {
+    const backendUrl = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:8000'
+    
     try {
       // 呼叫後端 AI API
-      const response = await fetch('http://localhost:8000/api/v1/chat', {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10秒超時
+
+      const response = await fetch(`${backendUrl}/api/v1/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMessage,
           context: messages.slice(-4).map(m => ({ role: m.role, content: m.content }))
-        })
+        }),
+        signal: controller.signal
       })
+
+      clearTimeout(timeoutId)
 
       if (response.ok) {
         const data = await response.json()
         return {
-          response: data.response,
+          response: data.response || '抱歉，我暫時無法回應。',
           suggested: data.suggested_questions || []
         }
+      } else {
+        console.warn('API response not ok:', response.status, response.statusText)
       }
     } catch (error) {
-      console.error('AI API Error:', error)
+      if (error.name === 'AbortError') {
+        console.warn('API request timeout')
+      } else {
+        console.error('AI API Error:', error)
+      }
     }
 
     // Fallback: 本地簡單回應
@@ -124,12 +138,24 @@ export function ChatWithLeungZai() {
     
     // 使用 Cantonese AI TTS API
     try {
-      const response = await fetch('https://cantonese.ai/api/tts', {
+      const apiKey = import.meta.env.VITE_CANTONESE_AI_API_KEY
+      const endpoint = import.meta.env.VITE_CANTONESE_AI_ENDPOINT || 'https://cantonese.ai/api/tts'
+      
+      if (!apiKey) {
+        console.warn('Cantonese AI API key not configured')
+        setIsSpeaking(false)
+        return
+      }
+
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 15000) // 15秒超時
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          api_key: 'sk-o0sqn7wHhgsSqHoNW0j58q0f0vwcms9',
-          text: text,
+          api_key: apiKey,
+          text: text.substring(0, 500), // 限制文本長度
           frame_rate: '24000',
           speed: 1,
           pitch: 0,
@@ -137,24 +163,36 @@ export function ChatWithLeungZai() {
           output_extension: 'wav',
           voice_id: '2725cf0f-efe2-4132-9e06-62ad84b2973d',
           should_return_timestamp: false
-        })
+        }),
+        signal: controller.signal
       })
+
+      clearTimeout(timeoutId)
 
       if (response.ok) {
         const audioBlob = await response.blob()
         const audioUrl = URL.createObjectURL(audioBlob)
         const audio = new Audio(audioUrl)
         
-        audio.play()
+        audio.play().catch(error => {
+          console.error('Audio playback failed:', error)
+          setIsSpeaking(false)
+        })
+        
         audio.onended = () => {
           setIsSpeaking(false)
           URL.revokeObjectURL(audioUrl)
         }
       } else {
+        console.warn('TTS API response not ok:', response.status)
         setIsSpeaking(false)
       }
     } catch (error) {
-      console.error('TTS Error:', error)
+      if (error.name === 'AbortError') {
+        console.warn('TTS request timeout')
+      } else {
+        console.error('TTS Error:', error)
+      }
       setIsSpeaking(false)
     }
   }
