@@ -6,6 +6,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 
 from app.core.config import settings
@@ -68,6 +69,9 @@ app.add_middleware(
 
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
+
+# Mount static files for audio playback
+app.mount("/audio", StaticFiles(directory="backend/app/static/audio"), name="audio")
 
 # WebSocket endpoint for real-time updates
 @app.websocket("/ws/podcast")

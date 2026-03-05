@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     # Cantonese AI TTS (Alternative/Primary)
     CANTONESE_AI_API_URL: str = "https://cantonese.ai/api/tts"
     CANTONESE_AI_API_KEY: str = ""
-    CANTONESE_AI_VOICE_ID: str = "2725cf0f-efe2-4132-9e06-62ad84b2973d"
+    CANTONESE_AI_VOICE_ID: str = "087b8717-9ff7-49fe-9ab5-9c30b15769ee"  # Mina voice
     
     # OpenAI
     OPENAI_API_KEY: str = ""

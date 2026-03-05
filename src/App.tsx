@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { PlayCircle, Radio, Atom, Sparkles, Menu, X, User, Settings, Bell, Mic2, MessageCircle } from 'lucide-react'
+import { PlayCircle, Radio, Atom, Sparkles, Menu, X, User, Settings, Bell, Mic2, MessageCircle, Newspaper } from 'lucide-react'
 import { UserProfileTest, type UserProfile } from './components/UserProfileTest'
 import { PodcastPlayer } from './components/PodcastPlayer'
 import { ContentAtoms } from './components/ContentAtoms'
 import { GammaMode } from './components/GammaMode'
 import { InteractiveRadio } from './components/InteractiveRadio'
 import { ChatWithLeungZai } from './components/ChatWithLeungZai'
+import { AINewsPodcast } from './components/AINewsPodcast'
+import { SmartRadioPlayer } from './components/SmartRadioPlayer'
 
-type Tab = 'profile' | 'chat' | 'radio' | 'podcast' | 'atoms' | 'gamma'
+type Tab = 'profile' | 'chat' | 'radio' | 'smart-radio' | 'podcast' | 'news' | 'atoms' | 'gamma'
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('profile')
@@ -24,6 +26,8 @@ function App() {
     { id: 'profile' as Tab, label: '個人化測試', icon: User },
     { id: 'chat' as Tab, label: '同叻仔傾計', icon: MessageCircle },
     { id: 'radio' as Tab, label: '互動電台', icon: Mic2 },
+    { id: 'smart-radio' as Tab, label: 'AI 智能電台', icon: Sparkles },
+    { id: 'news' as Tab, label: 'AI趨勢節目', icon: Newspaper },
     { id: 'podcast' as Tab, label: 'AI 播客', icon: PlayCircle },
     { id: 'atoms' as Tab, label: '內容原子', icon: Atom },
     { id: 'gamma' as Tab, label: 'Gamma 模式', icon: Sparkles },
@@ -220,6 +224,30 @@ function App() {
                 </p>
               </div>
               <InteractiveRadio userProfile={userProfile} />
+            </div>
+          )}
+
+          {activeTab === 'smart-radio' && (
+            <div className="max-w-5xl mx-auto">
+              <div className="text-center mb-8 space-y-2">
+                <h2 className="text-3xl font-bold glow-text">AI 智能電台</h2>
+                <p className="text-muted-foreground">
+                  LLM 實時生成主持對話 + Cantonese AI TTS 語音合成，真係識講嘢！
+                </p>
+              </div>
+              <SmartRadioPlayer topic="AI趨勢" />
+            </div>
+          )}
+
+          {activeTab === 'news' && (
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-8 space-y-2">
+                <h2 className="text-3xl font-bold glow-text">AI趨勢節目</h2>
+                <p className="text-muted-foreground">
+                  抓取最新財經新聞，AI 深度分析趨勢，生成專業粵語播客
+                </p>
+              </div>
+              <AINewsPodcast />
             </div>
           )}
 

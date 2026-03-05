@@ -12,6 +12,9 @@ from app.db.models import User, Podcast, ContentAtom
 from app.services.podcast_generator import podcast_generator
 from app.services.websocket_manager import ws_manager
 from app.services.chatbot_service import chatbot
+from app.services.rss_service import rss_service
+from app.services.ai_news_analyzer import ai_analyzer
+from app.services.cantonese_tts_service import cantonese_tts
 
 router = APIRouter()
 
@@ -36,6 +39,11 @@ class ChatRequest(BaseModel):
     message: str
     context: Optional[List[dict]] = None
     user_profile: Optional[UserProfileRequest] = None
+
+class NewsPodcastRequest(BaseModel):
+    focus_topic: str = "AI趨勢"
+    categories: Optional[List[str]] = ["rumour", "tech"]
+    limit: int = 15
 
 
 # User Routes
@@ -245,5 +253,93 @@ async def health_check():
             "database": "connected",
             "redis": "connected",
             "tts": "ready"
+        }
+    }
+
+
+# AI News Podcast Routes
+@router.post("/news-podcast/generate")
+async def generate_ai_news_podcast(request: NewsPodcastRequest):
+    """Generate AI-powered news analysis podcast from RSS feeds"""
+    try:
+        # Step 1: Fetch latest news from RSS
+        news_items = await rss_service.get_latest_news(
+            categories=request.categories,
+            total_limit=request.limit
+        )
+        
+        if not news_items:
+            raise HTTPException(status_code=404, detail="No news found")
+        
+        # Step 2: Generate podcast script with AI
+        script = await ai_analyzer.analyze_and_generate_script(
+            news_items=news_items,
+            focus_topic=request.focus_topic,
+            host_name="叻仔"
+        )
+        
+        # Step 3: Generate audio for each segment using Cantonese AI TTS
+        import uuid
+        from datetime import datetime
+        import os
+        
+        audio_segments = []
+        output_dir = "backend/app/static/audio"
+        os.makedirs(output_dir, exist_ok=True)
+        
+        for idx, segment in enumerate(script["segments"]):
+            filename = f"podcast_{segment['type']}_{uuid.uuid4().hex[:8]}.wav"
+            filepath = os.path.join(output_dir, filename)
+            
+            # Use Cantonese AI TTS to synthesize speech
+            audio_path = await cantonese_tts.synthesize_speech(
+                text=segment["content"],
+                output_filename=filename,
+                speed=1.0,
+                pitch=0
+            )
+            
+            audio_segments.append({
+                "type": segment["type"],
+                "title": segment.get("title", f"Segment {idx+1}"),
+                "audio_url": f"/audio/{audio_path}",
+                "duration_estimate": len(segment["content"]) * 0.06,  # ~10 chars per second
+                "text": segment["content"]
+            })
+        
+        # Return podcast data
+        return {
+            "success": True,
+            "podcast": {
+                "title": script["title"],
+                "description": script["description"],
+                "focus_topic": request.focus_topic,
+                "created_at": datetime.now().isoformat(),
+                "total_duration": sum(seg["duration_estimate"] for seg in audio_segments),
+                "segments": audio_segments,
+                "full_script": script["full_script"],
+                "news_count": script["news_count"],
+                "news_sources": list(set(item["source"] for item in news_items))
+            }
+        }
+    except Exception as e:
+        print(f"[API] News podcast generation failed: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/news-podcast/latest")
+async def get_latest_news_podcast():
+    """Get the latest generated news podcast metadata"""
+    # For now, return mock data - would fetch from database in production
+    return {
+        "podcast": {
+            "id": "latest_news_001",
+            "title": "AI趨勢分析：科技股領漲",
+            "description": "今日重點 AI 同科技相關新聞分析",
+            "created_at": "2026-03-05T10:00:00",
+            "duration": 420,
+            "news_count": 10
         }
     }

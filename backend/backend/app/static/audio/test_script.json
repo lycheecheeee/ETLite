@@ -1,0 +1,25 @@
+{
+  "title": "AI趨勢日報 - AI趨勢",
+  "description": "財經新聞分析節目",
+  "duration_estimate": 300,
+  "segments": [
+    {
+      "type": "intro",
+      "content": "哈囉！我係叻仔，歡迎收聽今日嘅 AI趨勢日報。"
+    },
+    {
+      "type": "news",
+      "content": "今日有幾單重要財經新聞，等我同大家分享一下..."
+    },
+    {
+      "type": "analysis",
+      "content": "講返 AI趨勢，呢個係而家好熱門嘅話題..."
+    },
+    {
+      "type": "closing",
+      "content": "多謝收聽，聽日見！"
+    }
+  ],
+  "full_script": "Fallback script",
+  "news_count": 0
+}
